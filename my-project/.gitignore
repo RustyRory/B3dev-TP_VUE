@@ -37,3 +37,7 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Docker
+docker-compose.override.yml
+*.dockerfile
