@@ -1,12 +1,13 @@
 <script setup>
 import { ref, onMounted, getCurrentInstance } from "vue"
 import { isLogged, pseudo, isLoading } from "../store/auth"
+import { config } from "../config/config.js" // 🌟 Import config pour l'API
 
 const { proxy } = getCurrentInstance()
 
 onMounted(async () => {
   try {
-    const res = await fetch("http://localhost:3000/api/auth/me", {
+    const res = await fetch(`${config.apiUrl}/auth/me`, {
       credentials: "include"
     })
 
@@ -25,12 +26,12 @@ onMounted(async () => {
 const login = async () => {
   if (!pseudo.value) return
 
-  const res = await fetch("http://localhost:3000/api/auth/login", {
+  const res = await fetch(`${config.apiUrl}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    credentials: "include", // 🔥 IMPORTANT
+    credentials: "include", // 🔥 important pour les cookies
     body: JSON.stringify({ pseudo: pseudo.value })
   })
 
@@ -40,7 +41,7 @@ const login = async () => {
 }
 
 const logout = async () => {
-  await fetch("http://localhost:3000/api/auth/logout", { 
+  await fetch(`${config.apiUrl}/auth/logout`, { 
     method: "POST", 
     credentials: "include" 
   })
@@ -53,21 +54,20 @@ const logout = async () => {
 <template>
   <div>
     <div v-if="isLoading">
-    Chargement...
+      Chargement...
     </div>
 
     <div v-else>
-        <div v-if="!isLogged">
-            <h3>Connexion</h3>
-            <input v-model="pseudo" placeholder="Votre pseudo" />
-            <button @click="login">Se connecter</button>
-        </div>
+      <div v-if="!isLogged">
+        <h3>Connexion</h3>
+        <input v-model="pseudo" placeholder="Votre pseudo" />
+        <button @click="login">Se connecter</button>
+      </div>
 
-        <div v-else>
-            <h3>Bienvenue {{ pseudo }}</h3>
-            <button @click="logout">Se déconnecter</button>
-        </div>
-  </div>
-    
+      <div v-else>
+        <h3>Bienvenue {{ pseudo }}</h3>
+        <button @click="logout">Se déconnecter</button>
+      </div>
+    </div>
   </div>
 </template>

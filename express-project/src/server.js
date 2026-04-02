@@ -1,11 +1,13 @@
 // backend/server.js
-const express = require("express")
-const http = require("http")
-const { Server } = require("socket.io")
-const cors = require("cors")
-const cookieParser = require("cookie-parser")
+import express from "express"
+import http from "http"
+import { Server } from "socket.io"
+import cors from "cors"
+import cookieParser from "cookie-parser"
 
-const authRoutes = require("./routes/auth")
+import authRoutes from "./routes/auth"
+
+import { config } from "./config/config"
 
 const app = express()
 const server = http.createServer(app)
@@ -29,7 +31,7 @@ app.get("/", (req, res) => {
 //   credentials: true
 // }))
 app.use(cors({
-  origin: 'http://78.138.58.95/tpvue', // ou '*'
+  origin: config.frontendUrl, // ou '*'
   methods: ['GET','POST','PUT','DELETE'],
   credentials: true
 }));
@@ -71,6 +73,6 @@ io.on("connection", (socket) => {
 })
 
 // Start server
-server.listen(3003, () => {
-  console.log("Server running on http://localhost:3003")
+server.listen(config.port, () => {
+  console.log(`Server running on http://localhost:${config.port}`)
 })
