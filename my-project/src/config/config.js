@@ -1,5 +1,5 @@
 export const config = {
-  frontend: "http://78.138.58.95:5173/tpvue",
+  frontend: "http://78.138.58.95:5173/B3dev-TP_VUE/",
   backend: "http://78.138.58.95:3003"
 }
 
