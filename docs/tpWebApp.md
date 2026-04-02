@@ -237,41 +237,51 @@ server {
     listen 80;
     server_name _;
 
-    # Page d'accueil
     root /var/www/home;
     index index.html;
 
-    location = / {
-        try_files $uri $uri/ /index.html;
+    # ===== PAGE D'ACCUEIL (HTML STATIQUE) =====
+    location / {
+	try_files $uri $uri/ /index.html;
     }
 
-    # Collegelaboussole
+    # ===== Collegelaboussole =====
     location /collegelaboussole/ {
         proxy_pass http://127.0.0.1:3000/;
+        proxy_http_version 1.1;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-    location /collegelaboussole/api/ {
-        proxy_pass http://127.0.0.1:5000/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
     }
 
-    # SaintBarth Volley
+    location /collegelaboussole/api/ {
+        proxy_pass http://127.0.0.1:3000/api/;
+    }
+
+    # ===== SaintbarthVolley =====
     location /saintbarthvolley/ {
         proxy_pass http://127.0.0.1:3001/;
     }
-    location /saintbarthvolley/api/ {
-        proxy_pass http://127.0.0.1:5001/;
+
+    # ===== APP 3 =====
+    location /app/ {
+        proxy_pass http://127.0.0.1:3002/;
     }
 
-    # TP Vue
+    # ===== TPVUE =====
     location /tpvue/ {
-        proxy_pass http://127.0.0.1:8080/;
+    	proxy_pass http://127.0.0.1:8080/;
+    	proxy_http_version 1.1;
+    	proxy_set_header Upgrade $http_upgrade;
+    	proxy_set_header Connection "upgrade";
+    	proxy_set_header Host $host;
     }
+
     location /tpvue/api/ {
-        proxy_pass http://127.0.0.1:3003/api/;
+    	proxy_pass http://127.0.0.1:3003/api/;
     }
+
 }
 ```
 
