@@ -6,5 +6,5 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 3000   # ou 5000 si Next/Express backend
+EXPOSE 3003   # ou 5000 si Next/Express backend
 CMD ["node", "server.js"]

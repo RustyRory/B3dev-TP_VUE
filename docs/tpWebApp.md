@@ -180,13 +180,13 @@ version: '3.8'
 services:
   # Collegelaboussole
   collegelaboussole-back:
-    build: ./collegelaboussole/backend
+    build: ./CollegeLaBoussole/collegeLaBoussoleApp/backend
     container_name: collegelaboussole-back
     ports:
       - "5000:5000"
 
   collegelaboussole-front:
-    build: ./collegelaboussole/frontend
+    build: ./CollegeLaBoussole/collegeLaBoussoleApp/frontend
     container_name: collegelaboussole-front
     ports:
       - "3000:3000"
@@ -206,16 +206,23 @@ services:
 
   # TP Vue
   tpvue-api:
-    build: ./tpvue/express-project
+    build:
+      context: ./tpvue/express-project
+      dockerfile: deployment/Dockerfile
     container_name: tpvue-api
     ports:
       - "3003:3000"
+    environment:
+      - NODE_ENV=test
 
   tpvue-front:
-    build: ./tpvue/my-project
+    build:
+      context: ./tpvue/my-project
+      dockerfile: deployment/Dockerfile
     container_name: tpvue-front
     ports:
       - "8080:80"
+
 ```
 
 Les ports à gauche sont exposés pour Nginx.
