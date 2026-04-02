@@ -1,48 +1,32 @@
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted, watch } from "vue"
 import { io } from "socket.io-client"
-import { getCurrentInstance } from "vue"
 import { isLogged, isLoading, pseudo } from "../store/auth"
-import { watch } from "vue"
 import { useRouter } from "vue-router"
-import { config } from "../config/config.js"  // <-- notre config .env
+import { config } from "../config/config.js"
 
-const { proxy } = getCurrentInstance()
-
-// ⚡ Connecte socket.io à l'API via l'URL publique
-const socket = io(config.apiUrl.replace("/api", ""), {
-  withCredentials: true
-})
-
+const router = useRouter()
 const messages = ref([])
 const message = ref("")
 
-const router = useRouter()
+// ⚡ Connecte Socket.io vers le backend (PAS /api)
+const socket = io(config.backend, { withCredentials: true })
+
+// Historique et nouveaux messages
+onMounted(() => {
+  socket.on("historique", (msgs) => { messages.value = msgs })
+  socket.on("message", (msg) => { messages.value.push(msg) })
+})
 
 // Redirection si non connecté
 watch([isLogged, isLoading], ([logged, loading]) => {
   if (!loading && !logged) router.push("/")
 })
 
-onMounted(() => {
-  socket.on("historique", (msgs) => {
-    messages.value = msgs
-  })
-
-  socket.on("message", (msg) => {
-    messages.value.push(msg)
-  })
-})
-
-// envoyer message
+// Envoyer message
 const sendMessage = () => {
   if (!message.value) return
-
-  socket.emit("nouveauMessage", {
-    pseudo: pseudo.value,
-    message: message.value
-  })
-
+  socket.emit("nouveauMessage", { pseudo: pseudo.value, message: message.value })
   message.value = ""
 }
 </script>
@@ -50,16 +34,12 @@ const sendMessage = () => {
 <template>
   <div>
     <h1>Chat</h1>
-
-    <!-- Messages -->
     <div style="height:300px; overflow:auto; border:1px solid #ccc; margin:10px 0;">
       <div v-for="(msg, index) in messages" :key="index">
         <strong>{{ msg.pseudo }}</strong> : {{ msg.message }}
         <small>({{ msg.date }})</small>
       </div>
     </div>
-
-    <!-- Input -->
     <input v-model="message" placeholder="Message..." />
     <button @click="sendMessage">Envoyer</button>
   </div>

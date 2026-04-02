@@ -9,7 +9,7 @@ import { isLogged, isLoading } from "../store/auth"
       <router-link to="/">Home</router-link>
       <router-link to="/about">About</router-link>
       
-      <router-link to="/datatable">DataTable</router-link>
+      <router-link v-if="!isLoading && isLogged" to="/datatable">DataTable</router-link>
 
       <router-link v-if="!isLoading && isLogged" to="/tchat">Tchat</router-link>
     </div>
