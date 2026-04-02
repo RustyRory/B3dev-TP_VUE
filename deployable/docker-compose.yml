@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  tpvue-api:
+    build: ./express-project
+    container_name: tpvue-api
+    ports:
+      - "3003:3000"
+    volumes:
+      - ./express-project:/usr/src/app
+    environment:
+      - NODE_ENV=production
+
+  tpvue-front:
+    build: ./my-project
+    container_name: tpvue-front
+    ports:
+      - "8080:80" # le front sera servi sur 8080
