@@ -180,13 +180,13 @@ version: '3.8'
 services:
   # Collegelaboussole
   collegelaboussole-back:
-    build: ./CollegeLaBoussole/collegeLaBoussoleApp/backend
+    build: ./collegelaboussole/collegeLaBoussoleApp/backend
     container_name: collegelaboussole-back
     ports:
       - "5000:5000"
 
   collegelaboussole-front:
-    build: ./CollegeLaBoussole/collegeLaBoussoleApp/frontend
+    build: ./collegelaboussole/collegeLaBoussoleApp/frontend
     container_name: collegelaboussole-front
     ports:
       - "3000:3000"
@@ -240,49 +240,40 @@ server {
     root /var/www/home;
     index index.html;
 
-    # ===== PAGE D'ACCUEIL (HTML STATIQUE) =====
-    location / {
-	try_files $uri $uri/ /index.html;
-    }
-
-    # ===== Collegelaboussole =====
-    location /collegelaboussole/ {
-        proxy_pass http://127.0.0.1:3000/;
+    # ===== TPVUE =====
+    location ^~ /tpvue/ {
+        proxy_pass http://127.0.0.1:8080/;
         proxy_http_version 1.1;
 
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
     }
 
-    location /collegelaboussole/api/ {
-        proxy_pass http://127.0.0.1:3000/api/;
+    location ^~ /tpvue/api/ {
+        proxy_pass http://127.0.0.1:3003/api/;
     }
 
-    # ===== SaintbarthVolley =====
-    location /saintbarthvolley/ {
+    # ===== AUTRES APPS =====
+    location ^~ /collegelaboussole/ {
+        proxy_pass http://127.0.0.1:3000/;
+    }
+
+    location ^~ /saintbarthvolley/ {
         proxy_pass http://127.0.0.1:3001/;
     }
 
-    # ===== APP 3 =====
-    location /app/ {
+    location ^~ /app/ {
         proxy_pass http://127.0.0.1:3002/;
     }
 
-    # ===== TPVUE =====
-    location /tpvue/ {
-    	proxy_pass http://127.0.0.1:8080/;
-    	proxy_http_version 1.1;
-    	proxy_set_header Upgrade $http_upgrade;
-    	proxy_set_header Connection "upgrade";
-    	proxy_set_header Host $host;
+    # ===== PAGE D'ACCUEIL (EN DERNIER) =====
+    location / {
+        try_files $uri $uri/ /index.html;
     }
-
-    location /tpvue/api/ {
-    	proxy_pass http://127.0.0.1:3003/api/;
-    }
-
 }
+
 ```
 
 ## Déploiement automatisé GitHub Actions
@@ -321,5 +312,5 @@ jobs:
             docker-compose up -d
 
             echo "✅ Déploiement terminé"
-```
+
 

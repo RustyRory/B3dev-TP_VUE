@@ -8,9 +8,12 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
+      # 1️⃣ Récupérer le code depuis le repo
       - uses: actions/checkout@v3
 
+      # 2️⃣ Se connecter au VPS et déployer
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.9
         with:
@@ -19,13 +22,20 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
-            cd /var/www/tpvue/ || exit 1
+            # Aller dans le dossier du projet
+            cd /var/www || exit 1
+
+            # Mettre à jour le code
             git fetch origin main
             git reset --hard origin/main
 
-            # Relancer les containers
+            # Stopper les containers existants
             docker-compose down
-            docker-compose build --no-cache
+
+            # Rebuild uniquement les services qui ont changé
+            docker-compose build --no-cache tpvue-api tpvue-front
+
+            # Relancer les containers en arrière-plan
             docker-compose up -d
 
             echo "✅ Déploiement terminé"
