@@ -5,17 +5,21 @@ import { getCurrentInstance } from "vue"
 import { isLogged, isLoading, pseudo } from "../store/auth"
 import { watch } from "vue"
 import { useRouter } from "vue-router"
-
+import { config } from "../config/config.js"  // <-- notre config .env
 
 const { proxy } = getCurrentInstance()
 
-const socket = io("http://localhost:3000")
+// ⚡ Connecte socket.io à l'API via l'URL publique
+const socket = io(config.apiUrl.replace("/api", ""), {
+  withCredentials: true
+})
 
 const messages = ref([])
 const message = ref("")
 
 const router = useRouter()
 
+// Redirection si non connecté
 watch([isLogged, isLoading], ([logged, loading]) => {
   if (!loading && !logged) router.push("/")
 })
@@ -41,7 +45,6 @@ const sendMessage = () => {
 
   message.value = ""
 }
-
 </script>
 
 <template>
