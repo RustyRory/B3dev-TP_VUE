@@ -3,11 +3,11 @@ version: '3.8'
 services:
   tpvue-api:
     build:
-      context: ./tpvue/express-project
+      context: ./B3dev-TP_VUE/express-project
       dockerfile: deployment/Dockerfile
     container_name: tpvue-api
     ports:
-      - "3003:3000"
+      - "3003:3003"
     volumes:
       - ./express-project:/usr/src/app
     environment:
@@ -15,7 +15,7 @@ services:
 
   tpvue-front:
     build:
-      context: ./tpvue/my-project
+      context: ./B3dev-TP_VUE/my-project
       dockerfile: deployment/Dockerfile
     container_name: tpvue-front
     ports:

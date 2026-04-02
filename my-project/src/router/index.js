@@ -4,7 +4,7 @@ import { isLogged, isLoading } from "../store/auth"
 import { awaitAuth } from "../service/auth"
 
 const router = createRouter({
-  history: createWebHistory("/tpvue/"),
+  history: createWebHistory("/B3dev-TP_VUE/"),
   routes: [
     {
       path: '/',
