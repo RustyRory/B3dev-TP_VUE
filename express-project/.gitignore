@@ -40,6 +40,3 @@ bower_components/
 # MacOS
 .DS_Store
 
-# Docker
-docker-compose.override.yml
-*.dockerfile
