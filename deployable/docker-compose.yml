@@ -8,6 +8,10 @@ services:
     container_name: tpvue-api
     ports:
       - "3003:3000"
+    volumes:
+      - ./express-project:/usr/src/app
+    environment:
+      - NODE_ENV=production
 
   tpvue-front:
     build:
@@ -15,4 +19,4 @@ services:
       dockerfile: deployment/Dockerfile
     container_name: tpvue-front
     ports:
-      - "8080:80"
+      - "8080:80" 
