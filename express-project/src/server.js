@@ -13,7 +13,8 @@ const server = http.createServer(app)
 
 // ===== CORS =====
 const corsOptions = {
-  origin: config.frontend, // autorise uniquement le frontend
+  //origin: config.frontend, // autorise uniquement le frontend
+  origin: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"],
   credentials: true
@@ -25,7 +26,12 @@ app.use(cookieParser())
 
 // ===== ROUTES =====
 app.use("/api/auth", authRoutes)
+
+// ===== ENDPOINTS =====
 app.get("/", (req, res) => res.send("API !"))
+app.get('/users', (req, res) => {
+  res.json([{ name: 'test' }])
+})
 
 // ===== SOCKET.IO =====
 const io = new Server(server, { cors: corsOptions })

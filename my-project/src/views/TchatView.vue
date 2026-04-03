@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue"
 import { io } from "socket.io-client"
-import { isLogged, isLoading, pseudo } from "../store/auth"
+import { isLogged, isLoading, pseudo } from "../config/authVariables.js"
 import { useRouter } from "vue-router"
 import { config } from "../config/config.js"
 

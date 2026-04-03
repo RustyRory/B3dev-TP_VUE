@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import { isLogged, isLoading } from "../store/auth"
-import { awaitAuth } from "../service/auth"
+import { isLogged, isLoading } from "../config/authVariables"
+import { awaitAuth } from "../service/authService"
 
 const router = createRouter({
   history: createWebHistory("/B3dev-TP_VUE/"),

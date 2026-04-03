@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, getCurrentInstance } from "vue"
-import { isLogged, pseudo, isLoading } from "../store/auth"
+import { isLogged, pseudo, isLoading } from "../config/authVariables.js"
 import { config } from "../config/config.js"
 
 const { proxy } = getCurrentInstance()

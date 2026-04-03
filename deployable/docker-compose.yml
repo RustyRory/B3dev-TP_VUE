@@ -1,22 +1,26 @@
 version: '3.8'
 
 services:
-  tpvue-api:
+  B3dev-TP_vue-api:
     build:
-      context: ./B3dev-TP_VUE/express-project
+      context: ./B3dev-TP_vue/express-project
       dockerfile: deployment/Dockerfile
-    container_name: tpvue-api
+    container_name: B3dev-TP_vue-api
     ports:
-      - "3003:3003"
-    volumes:
-      - ./express-project:/usr/src/app
+      - "3003:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=test
 
-  tpvue-front:
+  B3dev-TP_vue:
     build:
-      context: ./B3dev-TP_VUE/my-project
+      context: ./B3dev-TP_vue/my-project
       dockerfile: deployment/Dockerfile
-    container_name: tpvue-front
+    container_name: B3dev-TP_vue-front
     ports:
-      - "8080:80" 
+      - "8080:80"
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    volumes:
+      - ./data/mongo:/data/db

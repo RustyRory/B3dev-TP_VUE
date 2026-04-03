@@ -23,19 +23,19 @@ jobs:
           port: 22
           script: |
             # Aller dans le dossier du projet
-            cd /var/www || exit 1
+            cd /var/www/B3dev-TP_vue || exit 1
 
             # Mettre à jour le code
             git fetch origin main
             git reset --hard origin/main
 
             # Stopper les containers existants
-            #docker-compose down
+            cd .. && docker-compose down
 
             # Rebuild uniquement les services qui ont changé
-            #docker-compose build --no-cache tpvue-api tpvue-front
+            docker-compose build --no-cache B3dev-TP_vue-api B3dev-TP_vue-front
 
             # Relancer les containers en arrière-plan
-            #docker-compose up -d
+            docker-compose up -d
 
             echo "✅ Déploiement terminé"

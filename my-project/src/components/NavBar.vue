@@ -1,6 +1,6 @@
 <script setup>
 import ConnexionBox from "./ConnexionBox.vue"
-import { isLogged, isLoading } from "../store/auth"
+import { isLogged, isLoading } from "../config/authVariables.js"
 </script>
 
 <template>

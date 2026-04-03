@@ -1,5 +1,5 @@
 // utils/auth.js
-import { isLoading, isLogged } from "../store/auth"
+import { isLoading, isLogged } from "../config/authVariables"
 import { watch } from "vue"
 
 export const awaitAuth = () =>
