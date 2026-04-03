@@ -1,3 +1,4 @@
+// server.js
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
@@ -17,7 +18,7 @@ const server = http.createServer(app);
 
 // ===== CORS =====
 const corsOptions = {
-  origin: config.frontendOrigin, // juste le domaine du frontend
+  origin: config.frontendOrigin, // ex: http://78.138.58.95
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"],
   credentials: true
@@ -31,17 +32,19 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);
 
-// ===== ENDPOINT RACINE =====
-app.get("/", (req, res) => res.send("API !"));
+app.get("/", (req, res) => res.send("API en ligne !"));
 
 // ===== SOCKET.IO =====
-const io = new Server(server, { cors: corsOptions });
+const io = new Server(server, {
+  cors: corsOptions,
+  path: "/B3dev-TP_VUE/socket.io" // IMPORTANT : correspond à Nginx
+});
+
 const messages = [];
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // Historique
   socket.emit("historique", messages);
 
   socket.on("nouveauMessage", async ({ pseudo, message }) => {
@@ -49,10 +52,7 @@ io.on("connection", (socket) => {
 
     const cleanMessage = message.replace(/</g, "&lt;");
 
-    const msg = await Message.create({
-      pseudo,
-      message: cleanMessage
-    });
+    const msg = await Message.create({ pseudo, message: cleanMessage });
 
     await User.findOneAndUpdate(
       { pseudo },
@@ -60,21 +60,16 @@ io.on("connection", (socket) => {
       { upsert: true }
     );
 
-    messages.push(msg);
     io.emit("message", msg);
   });
 
   socket.on("disconnect", () => console.log("User disconnected:", socket.id));
 });
 
-// ===== CONNEXION MONGODB =====
+// ===== MONGODB =====
 mongoose.connect(config.mongoUri)
   .then(() => {
     console.log("✅ MongoDB connecté !");
-    server.listen(config.port, () =>
-      console.log(`Server running on ${config.backend}`)
-    );
+    server.listen(config.port, () => console.log(`Server running on ${config.backend}`));
   })
-  .catch((err) => {
-    console.error("❌ Erreur MongoDB :", err);
-  });
+  .catch((err) => console.error("❌ Erreur MongoDB :", err));
