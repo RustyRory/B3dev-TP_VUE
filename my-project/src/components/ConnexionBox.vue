@@ -1,9 +1,7 @@
 <script setup>
-import { ref, onMounted, getCurrentInstance } from "vue"
+import { ref, onMounted } from "vue"
 import { isLogged, pseudo, isLoading } from "../config/authVariables.js"
 import { config } from "../config/config.js"
-
-const { proxy } = getCurrentInstance()
 
 onMounted(async () => {
   try {
@@ -45,11 +43,11 @@ const logout = async () => {
     <div v-else>
       <div v-if="!isLogged">
         <h3>Connexion</h3>
-        <input v-model="pseudo" placeholder="Votre pseudo" />
+        <input v-model="pseudo.value" placeholder="Votre pseudo" />
         <button @click="login">Se connecter</button>
       </div>
       <div v-else>
-        <h3>Bienvenue {{ pseudo }}</h3>
+        <h3>Bienvenue {{ pseudo.value }}</h3>
         <button @click="logout">Se déconnecter</button>
       </div>
     </div>
