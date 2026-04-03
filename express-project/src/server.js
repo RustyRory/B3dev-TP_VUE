@@ -1,71 +1,83 @@
-import express from "express"
-import http from "http"
-import { Server } from "socket.io"
-import cors from "cors"
-import cookieParser from "cookie-parser"
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import mongoose from "mongoose";
 
-import authRoutes from "./routes/auth.js"
-import usersRoutes from "./routes/users.js"
-import { config } from "./config/config.js"
+import authRoutes from "./routes/auth.js";
+import usersRoutes from "./routes/users.js";
+import { config } from "./config/config.js";
 
-import Message from "./models/Message.js"
-import User from "./models/User.js"
+import Message from "./models/Message.js";
+import User from "./models/User.js";
 
-const app = express()
-const server = http.createServer(app)
+const app = express();
+const server = http.createServer(app);
 
 // ===== CORS =====
-// ⚠️ On ne met pas le chemin /B3dev-TP_VUE/ dans origin
 const corsOptions = {
-  origin: config.frontendOrigin, // seulement le domaine + port
+  origin: config.frontendOrigin, // juste le domaine du frontend
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"],
   credentials: true
-}
+};
 
-app.use(cors(corsOptions))
-app.use(express.json())
-app.use(cookieParser())
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(cookieParser());
 
 // ===== ROUTES =====
-app.use("/api/auth", authRoutes)
+app.use("/api/auth", authRoutes);
+app.use("/api/users", usersRoutes);
 
-// ===== ENDPOINTS =====
-app.get("/", (req, res) => res.send("API !"))
-app.use("/api/users", usersRoutes)
+// ===== ENDPOINT RACINE =====
+app.get("/", (req, res) => res.send("API !"));
 
 // ===== SOCKET.IO =====
-const io = new Server(server, { cors: corsOptions })
-const messages = []
+const io = new Server(server, { cors: corsOptions });
+const messages = [];
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id)
+  console.log("User connected:", socket.id);
 
-  // Envoi de l'historique
-  socket.emit("historique", messages)
+  // Historique
+  socket.emit("historique", messages);
 
   socket.on("nouveauMessage", async ({ pseudo, message }) => {
-    if (!pseudo || !message) return
+    if (!pseudo || !message) return;
 
-    const cleanMessage = message.replace(/</g, "&lt;")
+    const cleanMessage = message.replace(/</g, "&lt;");
 
     const msg = await Message.create({
       pseudo,
       message: cleanMessage
-    })
+    });
 
     await User.findOneAndUpdate(
       { pseudo },
       { lastMessageAt: new Date() },
       { upsert: true }
-    )
+    );
 
-    io.emit("message", msg)
-  })
+    messages.push(msg);
+    io.emit("message", msg);
+  });
 
-  socket.on("disconnect", () => console.log("User disconnected:", socket.id))
+  socket.on("disconnect", () => console.log("User disconnected:", socket.id));
+});
+
+// ===== CONNEXION MONGODB =====
+mongoose.connect(config.mongoUri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 })
-
-server.listen(config.port, () =>
-  console.log(`Server running on ${config.backend}`)
-)
+.then(() => {
+  console.log("✅ MongoDB connecté !");
+  server.listen(config.port, () => {
+    console.log(`Server running on ${config.backend}`);
+  });
+})
+.catch((err) => {
+  console.error("❌ Erreur MongoDB :", err);
+});
