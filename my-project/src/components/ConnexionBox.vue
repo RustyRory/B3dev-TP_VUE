@@ -47,14 +47,19 @@ const logout = async () => {
 <template>
   <div>
     <div v-if="isLoading">Chargement...</div>
+
     <div v-else>
       <div v-if="!isLogged">
         <h3>Connexion</h3>
-        <input v-model="pseudo.value" placeholder="Votre pseudo" />
+
+        <input v-model="pseudo" placeholder="Votre pseudo" />
+
         <button @click="login">Se connecter</button>
       </div>
+
       <div v-else>
-        <h3>Bienvenue {{ pseudo.value }}</h3>
+        <h3>Bienvenue {{ pseudo }}</h3>
+
         <button @click="logout">Se déconnecter</button>
       </div>
     </div>
