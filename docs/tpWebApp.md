@@ -476,11 +476,11 @@ git push origin main
 Rebuild les conteneurs manuellement (`/var/www/`):
 ```bash
 # Stopper les containers existants
-docker-compose down
+sudo docker-compose down
 # Rebuild uniquement les services qui ont changé
-docker-compose build --no-cache tp-vue-api tp-vue-front
+sudo docker-compose build --no-cache tp-vue-api tp-vue-front
 # Relancer les containers en arrière-plan
-docker-compose up -d
+sudo docker-compose up -d
 ```
 
 ## Screens
