@@ -2,6 +2,8 @@
 import { ref, onMounted } from "vue"
 import { isLogged, pseudo, isLoading } from "../config/authVariables.js"
 import { config } from "../config/config.js"
+import { computed } from "vue"
+
 
 onMounted(async () => {
   try {
@@ -16,6 +18,11 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
+})
+
+const pseudoLocal = computed({
+  get: () => pseudo.value,
+  set: (v) => pseudo.value = v
 })
 
 const login = async () => {

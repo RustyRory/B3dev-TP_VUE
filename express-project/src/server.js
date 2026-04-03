@@ -1,4 +1,3 @@
-// backend/server.js
 import express from "express"
 import http from "http"
 import { Server } from "socket.io"
@@ -12,9 +11,9 @@ const app = express()
 const server = http.createServer(app)
 
 // ===== CORS =====
+// ⚠️ On ne met pas le chemin /B3dev-TP_VUE/ dans origin
 const corsOptions = {
-  origin: config.frontend, // autorise uniquement le frontend
-  //origin: true,
+  origin: config.frontendOrigin, // seulement le domaine + port
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"],
   credentials: true
@@ -29,8 +28,8 @@ app.use("/api/auth", authRoutes)
 
 // ===== ENDPOINTS =====
 app.get("/", (req, res) => res.send("API !"))
-app.get('/users', (req, res) => {
-  res.json([{ name: 'test' }])
+app.get("/users", (req, res) => {
+  res.json([{ name: "test" }])
 })
 
 // ===== SOCKET.IO =====
@@ -40,13 +39,18 @@ const messages = []
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id)
 
-  // Envoi l'historique
+  // Envoi de l'historique
   socket.emit("historique", messages)
 
   socket.on("nouveauMessage", ({ pseudo, message }) => {
     if (!pseudo || !message) return
     const cleanMessage = message.replace(/</g, "&lt;")
-    const msg = { id: socket.id, pseudo, message: cleanMessage, date: new Date().toLocaleTimeString() }
+    const msg = {
+      id: socket.id,
+      pseudo,
+      message: cleanMessage,
+      date: new Date().toLocaleTimeString()
+    }
     messages.push(msg)
     io.emit("message", msg)
   })
@@ -54,4 +58,6 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => console.log("User disconnected:", socket.id))
 })
 
-server.listen(config.port, () => console.log(`Server running on ${config.backend}`))
+server.listen(config.port, () =>
+  console.log(`Server running on ${config.backend}`)
+)
