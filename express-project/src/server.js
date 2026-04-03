@@ -40,12 +40,11 @@ const io = new Server(server, {
   path: "/B3dev-TP_VUE/socket.io" // IMPORTANT : correspond à Nginx
 });
 
-const messages = [];
-
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.emit("historique", messages);
+  const history = await Message.find().sort({ createdAt: 1 }).limit(50);
+  socket.emit("historique", history);
 
   socket.on("nouveauMessage", async ({ pseudo, message }) => {
     if (!pseudo || !message) return;

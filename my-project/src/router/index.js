@@ -28,7 +28,7 @@ router.beforeEach(async (to, from, next) => {
   if (to.path === "/tchat" || to.path === "/datatable") {
     const logged = await awaitAuth()
     if (!logged) next("/")
-    else next("/tchat")
+    else next()
   } else {
     next()
   }
