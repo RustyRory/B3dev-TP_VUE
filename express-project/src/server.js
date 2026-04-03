@@ -54,4 +54,4 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => console.log("User disconnected:", socket.id))
 })
 
-server.listen(config.port, () => console.log(`Server running on http://localhost:${config.port}`))
+server.listen(config.port, () => console.log(`Server running on ${config.backend}`))
