@@ -521,6 +521,25 @@ server {
 
 ## Déploiement automatisé GitHub Actions
 
+### Gestion users pour VPS
+
+Ajouter ton utilisateur (ici github) au groupe docker et Recharger la session pour prendre en compte le groupe :
+```bash
+sudo usermod -aG docker github
+newgrp docker
+```
+
+Vérifier :
+```bash
+docker ps
+docker-compose ps
+```
+
+GitHub Actions pourra exécuter docker et docker-compose sans demander de mot de passe.
+
+
+### Fichier de déploiement
+
 `.github/workflows/deploy.yml`: 
 
 Il faut ajouter des secrets sur Github pour que le déploiement fonctionne : 

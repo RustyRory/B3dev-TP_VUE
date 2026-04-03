@@ -27,31 +27,22 @@ jobs:
             # Aller dans le dossier du projet
             cd /var/www/B3dev-TP_VUE || exit 1
 
-            # Mettre à jour le code depuis Git
+            # Mettre à jour le code
             git fetch origin main
             git reset --hard origin/main
-
             echo "🔹 Code mis à jour"
 
-            # Stopper et supprimer les containers existants (y compris les orphelins)
-            sudo docker-compose down --remove-orphans
-
+            # Stopper et supprimer tous les containers existants (y compris les orphelins)
+            docker-compose down --remove-orphans
             echo "🔹 Containers existants arrêtés"
 
-            # Supprimer les images existantes pour forcer le rebuild
-            sudo docker rmi -f B3dev-TP_vue-api tp-vue-front || true
-
-            echo "🔹 Anciennes images supprimées"
-
             # Rebuild des services sans utiliser le cache
-            sudo docker-compose build --no-cache B3dev-TP_vue-api tp-vue-front
-
+            docker-compose build --no-cache tp-vue-api tp-vue-front
             echo "🔹 Services rebuildés"
 
             # Relancer les containers en arrière-plan
-            sudo docker-compose up -d
-
+            docker-compose up -d
             echo "✅ Déploiement terminé et containers lancés"
 
             # Vérifier l’état des containers
-            sudo docker ps
+            docker ps
