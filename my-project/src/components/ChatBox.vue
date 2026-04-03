@@ -7,9 +7,9 @@ import { config } from "../config/config.js"
 const messages = ref([])
 const message = ref("")
 
-const socket = io(config.backend, {
+const socket = io(new URL(config.backend).origin, {
   withCredentials: true,
-  path: "/B3dev-TP_VUE/socket.io/" 
+  path: "/B3dev-TP_VUE/socket.io/"
 })
 
 onMounted(() => {
