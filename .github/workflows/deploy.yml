@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Récupérer le code depuis le repo
+      # 1️⃣ Récupérer le code depuis le repo
       - uses: actions/checkout@v3
 
-      # Se connecter au VPS et déployer
+      # 2️⃣ Se connecter au VPS et déployer
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.9
         with:
@@ -29,10 +29,13 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Stopper les containers existants
-            cd .. && docker-compose down
+            # Stopper et supprimer tous les containers existants (avec les orphelins)
+            docker-compose down --remove-orphans
 
-            # Rebuild uniquement les services qui ont changé
+            # Supprimer les images existantes pour forcer le rebuild complet
+            docker rmi -f tp-vue-api tp-vue-front || true
+
+            # Rebuild les services sans utiliser le cache
             docker-compose build --no-cache tp-vue-api tp-vue-front
 
             # Relancer les containers en arrière-plan
