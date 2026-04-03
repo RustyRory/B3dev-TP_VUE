@@ -35,7 +35,7 @@ const logout = async () => {
   await fetch(`${config.backend}/api/auth/logout`, { method: "POST", credentials: "include" })
   pseudo.value = ""
   isLogged.value = false
-  window.location.href = "/"
+  window.location.href = "/B3dev-TP_VUE/"
 }
 </script>
 
