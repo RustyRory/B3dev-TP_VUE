@@ -68,16 +68,13 @@ io.on("connection", (socket) => {
 });
 
 // ===== CONNEXION MONGODB =====
-mongoose.connect(config.mongoUri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => {
-  console.log("✅ MongoDB connecté !");
-  server.listen(config.port, () => {
-    console.log(`Server running on ${config.backend}`);
+mongoose.connect(config.mongoUri)
+  .then(() => {
+    console.log("✅ MongoDB connecté !");
+    server.listen(config.port, () =>
+      console.log(`Server running on ${config.backend}`)
+    );
+  })
+  .catch((err) => {
+    console.error("❌ Erreur MongoDB :", err);
   });
-})
-.catch((err) => {
-  console.error("❌ Erreur MongoDB :", err);
-});
