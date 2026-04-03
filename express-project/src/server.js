@@ -13,8 +13,8 @@ const server = http.createServer(app)
 
 // ===== CORS =====
 const corsOptions = {
-  //origin: config.frontend, // autorise uniquement le frontend
-  origin: true,
+  origin: config.frontend, // autorise uniquement le frontend
+  //origin: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"],
   credentials: true

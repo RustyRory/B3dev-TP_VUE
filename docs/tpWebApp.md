@@ -469,7 +469,7 @@ sudo systemctl reload nginx
 Lors d'un push sur main, le code se mets à jour sur le VPS : 
 ```bash
 git add .
-git commit -m "something"
+git commit -m "-message"
 git push origin main
 ```
 

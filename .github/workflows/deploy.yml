@@ -23,7 +23,7 @@ jobs:
           port: 22
           script: |
             # Aller dans le dossier du projet
-            cd /var/www/B3dev-TP_vue || exit 1
+            cd /var/www/B3dev-TP_VUE || exit 1
 
             # Mettre à jour le code
             git fetch origin main
@@ -33,7 +33,7 @@ jobs:
             cd .. && docker-compose down
 
             # Rebuild uniquement les services qui ont changé
-            docker-compose build --no-cache B3dev-TP_vue-api B3dev-TP_vue-front
+            docker-compose build --no-cache B3dev-TP_VUE-api B3dev-TP_VUE-front
 
             # Relancer les containers en arrière-plan
             docker-compose up -d
