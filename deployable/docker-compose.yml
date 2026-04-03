@@ -1,21 +1,21 @@
 version: '3.8'
 
 services:
-  B3dev-TP_VUE-api:
+  tp-vue-api:
     build:
       context: ./B3dev-TP_VUE/express-project
       dockerfile: deployment/Dockerfile
-    container_name: B3dev-TP_VUE-api
+    container_name: tp-vue-api
     ports:
       - "3003:3000"
     environment:
       - NODE_ENV=test
 
-  B3dev-TP_VUE-front:
+  tp-vue-front:
     build:
       context: ./B3dev-TP_VUE/my-project
       dockerfile: deployment/Dockerfile
-    container_name: B3dev-TP_VUE-front
+    container_name: tp-vue-front
     ports:
       - "8080:80"
 

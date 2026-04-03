@@ -478,7 +478,7 @@ Rebuild les conteneurs manuellement (`/var/www/`):
 # Stopper les containers existants
 docker-compose down
 # Rebuild uniquement les services qui ont changé
-docker-compose build --no-cache B3dev-TP_VUE-api B3dev-TP_VUE-front
+docker-compose build --no-cache tp-vue-api tp-vue-front
 # Relancer les containers en arrière-plan
 docker-compose up -d
 ```

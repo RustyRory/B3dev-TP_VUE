@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Récupérer le code depuis le repo
+      # Récupérer le code depuis le repo
       - uses: actions/checkout@v3
 
-      # 2️⃣ Se connecter au VPS et déployer
+      # Se connecter au VPS et déployer
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.9
         with:
@@ -33,9 +33,9 @@ jobs:
             cd .. && docker-compose down
 
             # Rebuild uniquement les services qui ont changé
-            docker-compose build --no-cache B3dev-TP_VUE-api B3dev-TP_VUE-front
+            docker-compose build --no-cache tp-vue-api tp-vue-front
 
             # Relancer les containers en arrière-plan
             docker-compose up -d
 
-            echo "✅ Déploiement terminé"
+            echo "Déploiement terminé"
