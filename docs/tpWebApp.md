@@ -483,5 +483,29 @@ docker-compose build --no-cache B3dev-TP_VUE-api B3dev-TP_VUE-front
 docker-compose up -d
 ```
 
+## Screens
 
+### http://ip/
+<img src="./imgs/multiapp.png" />
+
+### http://ip:8080/ ou http://ip/B3dev-TP_VUE/
+<img src="./imgs/tpvue.png" />
+
+### etc...
+
+# Pages
+## Home
+## About
+
+# NavBar
+## ConnexionBox
+
+# Tchat
+
+# Database
+## Mongo
+## Users
+## Datatable
+
+# Shadcn
 

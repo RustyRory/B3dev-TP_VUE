@@ -6,7 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/", /// B3dev-TP_VUE/
+  base: "/B3dev-TP_VUE/", /// B3dev-TP_VUE/
   plugins: [
     vue(),
     vueDevTools(),
