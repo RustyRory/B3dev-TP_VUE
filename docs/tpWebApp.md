@@ -428,10 +428,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Récupérer le code depuis le repo
+      # Récupérer le code depuis le repo
       - uses: actions/checkout@v3
 
-      # 2️⃣ Se connecter au VPS et déployer
+      # Se connecter au VPS et déployer
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.9
         with:
@@ -456,7 +456,7 @@ jobs:
             # Relancer les containers en arrière-plan
             docker-compose up -d
 
-            echo "✅ Déploiement terminé"
+            echo "Déploiement terminé"
 ```
 ## Update config / Web app
 
@@ -471,6 +471,16 @@ Lors d'un push sur main, le code se mets à jour sur le VPS :
 git add .
 git commit -m "-message"
 git push origin main
+```
+
+Rebuild les conteneurs manuellement (`/var/www/`):
+```bash
+# Stopper les containers existants
+docker-compose down
+# Rebuild uniquement les services qui ont changé
+docker-compose build --no-cache B3dev-TP_VUE-api B3dev-TP_VUE-front
+# Relancer les containers en arrière-plan
+docker-compose up -d
 ```
 
 
