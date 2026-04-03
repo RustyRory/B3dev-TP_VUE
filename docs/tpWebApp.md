@@ -63,11 +63,123 @@ Web app : tchat avec connexion via pseudo et storage dans une bdd (users(id, nom
 
 # Création du projet express
 
-Todo
+## Initialisation
 
+```bash
+mkdir express-project
+cd express-project
+npm init -y
+npm install express cors cookie-parser dotenv mongoose socket.io
+```
+
+## Structure
+
+```
+express-project/
+│
+├── models/
+│   ├── User.js
+│   └── Message.js
+│
+├── routes/
+│   ├── auth.js
+│   └── users.js
+│
+├── config/
+│   └── config.js
+│
+├── server.js
+└── package.json
+```
+
+## Fonctionnalités backend
+
+- Authentification via pseudo (cookie)
+- API REST :
+  - `/api/auth/login`
+  - `/api/auth/logout`
+  - `/api/auth/me`
+  - `/api/users`
+- WebSocket avec Socket.io :
+  - connexion utilisateur
+  - envoi de messages
+  - broadcast en temps réel
+- Connexion MongoDB avec Mongoose
+
+### Modèles MongoDB
+
+`User`
+- pseudo
+- createdAt
+- lastMessageAt
+
+`Message`
+- pseudo
+- message
+- createdAt
+
+## Configuration
+
+`.env` :
+```
+# Port interne du container
+PORT=3000
+
+VITE_FRONTEND_ORIGIN=http://ip
+
+VITE_FRONTEND_URL=http://ip/B3dev-TP_VUE/
+
+VITE_BACKEND_URL=http://ip/B3dev-TP_VUE/api
+
+JWT_SECRET=ton_secret_jwt_ici
+MONGO_URI=mongodb://mongo:27017/mydb
+```
 # Création du projet Vue
 
-Todo
+## Initialisation
+
+```bash
+npm create vue@latest
+cd my-project
+npm install
+npm install socket.io-client
+```
+## Structure
+```
+my-project/
+│
+├── src/
+│   ├── views/
+│   │   ├── HomeView.vue
+│   │   ├── TchatView.vue
+│   │   └── DataTableView.vue
+│   │
+│   ├── components/
+│   │   ├── Navbar.vue
+│   │   ├── ConnexionBox.vue
+│   │   ├── ChatBox.vue
+│   │   └── UserList.vue
+│   │
+│   ├── router/
+│   ├── config/
+│   └── assets/
+```
+
+## Fonctionnalités frontend
+
+- Navigation avec Vue Router
+- Gestion d’état (authVariables.js)
+- Authentification via cookies
+- Chat temps réel avec Socket.io
+- Appels API REST (fetch)
+- Layout dynamique (chat + users)
+
+## Configuration
+
+`.env` :
+
+VITE_BACKEND_URL=http://IP/B3dev-TP_VUE/api
+VITE_FRONTEND_URL=http://IP/B3dev-TP_VUE/
 
 # VPS multi-app (Next.js + Express + Vue + Express), avec Docker et Nginx
 
@@ -90,6 +202,7 @@ adduser newuser
 # Ajouter l’utilisateur aux sudoers
 usermod -aG sudo newuser
 ```
+
 ### Gestion des clés SSH
 
 Sur PC local :
@@ -466,14 +579,25 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-Lors d'un push sur main, le code se mets à jour sur le VPS : 
+À chaque push sur la branche `main` :
 ```bash
 git add .
 git commit -m "-message"
 git push origin main
 ```
 
-Rebuild les conteneurs manuellement (`/var/www/`):
+1. Connexion SSH au VPS
+2. Mise à jour du code (git pull)
+3. Arrêt des containers Docker
+4. Rebuild des images
+5. Redémarrage des services
+
+Avantages
+- Déploiement rapide
+- Réduction des erreurs humaines
+- Synchronisation automatique avec GitHub
+
+Pour rebuild les conteneurs manuellement (`/var/www/`):
 ```bash
 # Stopper les containers existants
 sudo docker-compose down
@@ -491,21 +615,108 @@ sudo docker-compose up -d
 ### http://ip:8080/ ou http://ip/B3dev-TP_VUE/
 <img src="./imgs/tpvue.png" />
 
-### etc...
-
-# Pages
-## Home
-## About
-
-# NavBar
-## ConnexionBox
-
 # Tchat
 
+## Fonctionnement
+
+Le chat utilise Socket.io pour permettre une communication en temps réel entre les utilisateurs.
+
+### Connexion
+
+Le frontend se connecte au backend via :
+
+```js
+io(config.backend, {
+  withCredentials: true,
+  path: "/B3dev-TP_VUE/socket.io/"
+})
+```
+### Événements
+- connection → utilisateur connecté
+- historique → récupération des anciens messages
+- message → réception d’un message
+- nouveauMessage → envoi d’un message
+
+### Stockage
+
+Les messages sont :
+- stockés en mémoire (temporaire)
+- sauvegardés en base MongoDB (persistant)
+
+### Interface
+
+Le chat est composé de :
+- une liste des utilisateurs
+- une zone de messages
+- un champ de saisie
+
+<img src="./imgs/tchat.png" />
+
 # Database
-## Mongo
+
+## Connexion
+
+Via Mongoose :
+
+```js
+mongoose.connect(process.env.MONGO_URI)
+```
+
 ## Users
+
+```json
+{
+  pseudo: String,
+  createdAt: Date,
+  lastMessageAt: Date
+}
+```
+
+## Messages
+
+```json
+{
+  pseudo: String,
+  message: String,
+  createdAt: Date
+}
+```
+
 ## Datatable
+
+Une vue permet d’afficher tous les utilisateurs sous forme de tableau.
+
+Fonctionnalités :
+- affichage des pseudos
+- tri par date
+- date du dernier message
+
+# NavBar
+
+La navigation est gérée via Vue Router.
+
+## Liens
+
+- Home
+- About
+- DataTable (auth requis)
+- Tchat (auth requis)
+
+## ConnexionBox
+
+Composant gérant l’authentification :
+
+Fonctionnalités :
+- login via pseudo
+- logout
+- affichage dynamique :
+  - "Connexion"
+  - ou "Bienvenue + pseudo"
+
+Utilise :
+- `/api/auth/login`
+- `/api/auth/logout`
+- `/api/auth/me`
 
 # Shadcn
 
