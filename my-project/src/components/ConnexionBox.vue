@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted } from "vue"
+import { computed, onMounted } from "vue"
 import { isLogged, pseudo, isLoading } from "../config/authVariables.js"
 import { config } from "../config/config.js"
-import { computed } from "vue"
-
+import UiButton from "./ui/Button.vue"
+import UiInput from "./ui/Input.vue"
 
 onMounted(async () => {
   try {
@@ -46,22 +46,23 @@ const logout = async () => {
 
 <template>
   <div>
-    <div v-if="isLoading">Chargement...</div>
+    <div v-if="isLoading" class="text-sm text-gray-400">Chargement...</div>
 
-    <div v-else>
-      <div v-if="!isLogged">
-        <h3>Connexion</h3>
+    <div v-else-if="!isLogged" class="flex items-center gap-2">
+      <UiInput
+        v-model="pseudoLocal"
+        placeholder="Votre pseudo"
+        class="w-36"
+        @keyup.enter="login"
+      />
+      <UiButton size="sm" @click="login">Connexion</UiButton>
+    </div>
 
-        <input v-model="pseudo" placeholder="Votre pseudo" />
-
-        <button @click="login">Se connecter</button>
-      </div>
-
-      <div v-else>
-        <h3>Bienvenue {{ pseudo }}</h3>
-
-        <button @click="logout">Se déconnecter</button>
-      </div>
+    <div v-else class="flex items-center gap-3">
+      <span class="text-sm text-gray-600">
+        Bonjour, <span class="font-semibold text-gray-900">{{ pseudo }}</span>
+      </span>
+      <UiButton variant="outline" size="sm" @click="logout">Déconnexion</UiButton>
     </div>
   </div>
 </template>

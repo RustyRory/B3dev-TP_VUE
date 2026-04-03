@@ -17,11 +17,6 @@ const router = createRouter({
       component: () => import('../views/AboutView.vue') // lazy load
     },
     {
-      path: '/datatable',
-      name: 'datatable',
-      component: () => import('../views/DataTableView.vue')
-    },
-    {
       path: '/tchat',
       name: 'tchat',
       component: () => import('../views/TchatView.vue')
@@ -30,10 +25,10 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  if (to.path === "/tchat") {
+  if (to.path === "/tchat" || to.path === "/datatable") {
     const logged = await awaitAuth()
     if (!logged) next("/")
-    else next()
+    else next("/tchat")
   } else {
     next()
   }
