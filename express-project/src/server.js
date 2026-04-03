@@ -5,7 +5,11 @@ import cors from "cors"
 import cookieParser from "cookie-parser"
 
 import authRoutes from "./routes/auth.js"
+import usersRoutes from "./routes/users.js"
 import { config } from "./config/config.js"
+
+import Message from "./models/Message.js"
+import User from "./models/User.js"
 
 const app = express()
 const server = http.createServer(app)
@@ -28,9 +32,7 @@ app.use("/api/auth", authRoutes)
 
 // ===== ENDPOINTS =====
 app.get("/", (req, res) => res.send("API !"))
-app.get("/users", (req, res) => {
-  res.json([{ name: "test" }])
-})
+app.use("/api/users", usersRoutes)
 
 // ===== SOCKET.IO =====
 const io = new Server(server, { cors: corsOptions })
@@ -42,16 +44,22 @@ io.on("connection", (socket) => {
   // Envoi de l'historique
   socket.emit("historique", messages)
 
-  socket.on("nouveauMessage", ({ pseudo, message }) => {
+  socket.on("nouveauMessage", async ({ pseudo, message }) => {
     if (!pseudo || !message) return
+
     const cleanMessage = message.replace(/</g, "&lt;")
-    const msg = {
-      id: socket.id,
+
+    const msg = await Message.create({
       pseudo,
-      message: cleanMessage,
-      date: new Date().toLocaleTimeString()
-    }
-    messages.push(msg)
+      message: cleanMessage
+    })
+
+    await User.findOneAndUpdate(
+      { pseudo },
+      { lastMessageAt: new Date() },
+      { upsert: true }
+    )
+
     io.emit("message", msg)
   })
 
