@@ -1,0 +1,19 @@
+{
+  "name": "B3dev Chat",
+  "short_name": "B3dev",
+  "description": "Application de tchat temps réel et gestion de données",
+  "theme_color": "#111827",
+  "background_color": "#f9fafb",
+  "display": "standalone",
+  "start_url": "/B3dev-TP_VUE/",
+  "scope": "/B3dev-TP_VUE/",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/B3dev-TP_VUE/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
