@@ -1,476 +1,550 @@
-# Documentation de projet
+# Documentation de projet — TP B3dev Web Application
 
-## TP B3 dev - Web application - VueJs / ExpressJs
+> VueJs · ExpressJs · Socket.IO · MongoDB · Docker · Nginx
 
-### Objectif du TP
+---
 
-Vous pouvez utiliser en option API ou en composition.
+## Sommaire
 
-    Créer son propre composant navBar en .vue pour avoir plusieurs "pages".
-    Utiliser une bibliotèque de composants (comparatif)
-    Creer un formulaire sur plusieurs étapes, avec possibilité de revenir sur l'étape en cours.
-    Installer une transition entre les pages.
-    Utiliser votre API avec des appels REST
-    Utiliser un environnement de test.
-    Mise en production (avec CI/CD) sur votre VPS.
-    Votre application doit utiliser des ressources internes :
-        Stokage interne
-        Notification
-        nombre d'alerte
-        Partage
-        Contact Picker. demo
-        GeoLocalisation
-        Touch event
+1. [Objectif du TP](#1-objectif-du-tp)
+2. [Ce que j'ai réalisé](#2-ce-que-jai-réalisé)
+3. [Projet Express (Backend)](#3-projet-express-backend)
+   - [Initialisation](#initialisation)
+   - [Structure](#structure)
+   - [API REST](#api-rest)
+   - [WebSocket Socket.IO](#websocket-socketio)
+   - [Modèles MongoDB](#modèles-mongodb)
+   - [Configuration](#configuration-backend)
+4. [Projet Vue (Frontend)](#4-projet-vue-frontend)
+   - [Initialisation](#initialisation-1)
+   - [Structure](#structure-1)
+   - [Vues](#vues)
+   - [Composants](#composants)
+   - [Composants UI](#composants-ui-shadcn-inspired)
+   - [Router & Guards](#router--guards)
+   - [État global](#état-global)
+   - [Configuration](#configuration-frontend)
+5. [Authentification & Sécurité](#5-authentification--sécurité)
+6. [Tchat temps réel](#6-tchat-temps-réel)
+7. [Géolocalisation](#7-géolocalisation)
+8. [PWA](#8-pwa)
+9. [Tests unitaires](#9-tests-unitaires)
+10. [VPS — Infrastructure](#10-vps--infrastructure)
+    - [Création utilisateur & SSH](#création-utilisateur--ssh)
+    - [Nginx](#nginx)
+    - [Docker](#docker)
+    - [MongoDB](#mongodb)
+    - [Structure des dossiers](#structure-des-dossiers-vps)
+    - [Docker Compose](#docker-compose)
+    - [Nginx reverse proxy](#nginx-reverse-proxy)
+11. [CI/CD GitHub Actions](#11-cicd-github-actions)
 
-Voici quelques consignes supplémentaire non-obligatoires, juste pour s'amuser
+---
 
-    Intégrer le tout dans un docker.
+## 1. Objectif du TP
 
-### Ce que j'ai fais / ferai
+Formation **MyDigitalSchool** — réaliser une web application avec Vue.js et Express.
 
-Web app : tchat avec connexion via pseudo et storage dans une bdd (users(id, nom, messages[String], connectedAt, lastMessageAt))
+Consignes principales :
+- Créer son propre composant `NavBar` en `.vue` pour avoir plusieurs pages
+- Utiliser une bibliothèque de composants (comparatif)
+- Créer un formulaire sur plusieurs étapes avec possibilité de revenir en arrière
+- Installer une transition entre les pages
+- Utiliser une API avec des appels REST
+- Utiliser un environnement de test
+- Mise en production avec CI/CD sur VPS
+- Utiliser des ressources internes : stockage interne, géolocalisation, notifications…
 
-- En local : 
-  - Installation de l'environnement de dev (vue + express)
-  - Construction du backend
-    - Controllers
-    - Routes
-    - Middleware
-    - server.js
-  - Construction du frontend
-    - Views
-    - Components
-    - routers
-    - services
-    - stores
-- Construction d'un multi-app sur VPS
-  - Config VPS
-    - User
-    - Clefs ssh
-    - Services
-      - Nginx
-      - Docker
-  - Config serv web
-  - Config docker 
-    - Conteneurisation app
-    - Conteneurisation mongo (à faire)
-- à faire
-  - BDD (mongodb)
-  - API rest
-  - Datatable view (affichage des données users)
-  - Ajouter shadcn 
-  - Creer un formulaire sur plusieurs étapes, avec possibilité de revenir sur l'étape en cours.
+Bonus : intégrer le tout dans Docker.
 
-# Création du projet express
+---
 
-## Initialisation
+## 2. Ce que j'ai réalisé
+
+Web app de **tchat en temps réel** avec inscription, authentification et gestion de compte, déployée sur VPS.
+
+| Fonctionnalité | Statut |
+|---|---|
+| NavBar custom responsive (hamburger mobile) | ✅ |
+| Bibliothèque UI custom inspirée de shadcn (Button, Input, Card) | ✅ |
+| Formulaire d'inscription multi-étapes (pseudo, mot de passe, avatar) | ✅ |
+| Authentification par pseudo + mot de passe (bcrypt + cookie) | ✅ |
+| API REST (register, login, logout, me, update, users) | ✅ |
+| Chat temps réel Socket.IO (historique MongoDB + broadcast) | ✅ |
+| Présence en ligne des utilisateurs (connect/disconnect temps réel) | ✅ |
+| Géolocalisation par IP (ville affichée au hover) | ✅ |
+| Page Espace : onglets Tchat / DataTable | ✅ |
+| DataTable : compteur de messages, statut en ligne | ✅ |
+| Page Paramètres (changer couleur avatar, changer mot de passe) | ✅ |
+| Navigation gardée (routes protégées si non connecté) | ✅ |
+| PWA (manifest.json + meta tags, installable) | ✅ |
+| Tests unitaires Vitest + Vue Test Utils | ✅ |
+| Déploiement VPS avec Docker + Nginx | ✅ |
+| CI/CD GitHub Actions | ✅ |
+
+---
+
+## 3. Projet Express (Backend)
+
+### Initialisation
 
 ```bash
-mkdir express-project
-cd express-project
+mkdir express-project && cd express-project
 npm init -y
-npm install express cors cookie-parser dotenv mongoose socket.io
+npm install express cors cookie-parser dotenv mongoose socket.io bcrypt
 ```
 
-## Structure
+### Structure
 
 ```
 express-project/
 │
-├── models/
-│   ├── User.js
-│   └── Message.js
+├── src/
+│   ├── models/
+│   │   ├── User.js        — pseudo, password (hash), color, createdAt, lastMessageAt
+│   │   └── Message.js     — pseudo, message, createdAt
+│   │
+│   ├── routes/
+│   │   ├── auth.js        — register, login, logout, me, check-pseudo, update
+│   │   └── users.js       — liste des utilisateurs avec compteur messages
+│   │
+│   ├── controllers/
+│   │   └── authController.js
+│   │
+│   ├── config/
+│   │   └── config.js
+│   │
+│   └── server.js          — Express + Socket.IO + MongoDB
 │
-├── routes/
-│   ├── auth.js
-│   └── users.js
-│
-├── config/
-│   └── config.js
-│
-├── server.js
+├── deployment/
+│   └── Dockerfile
 └── package.json
 ```
 
-## Fonctionnalités backend
+### API REST
 
-- Authentification via pseudo (cookie)
-- API REST :
-  - `/api/auth/login`
-  - `/api/auth/logout`
-  - `/api/auth/me`
-  - `/api/users`
-- WebSocket avec Socket.io :
-  - connexion utilisateur
-  - envoi de messages
-  - broadcast en temps réel
-- Connexion MongoDB avec Mongoose
+| Méthode | Route | Description | Auth requise |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Inscription (pseudo, password, color) | Non |
+| `POST` | `/api/auth/login` | Connexion, pose un cookie | Non |
+| `POST` | `/api/auth/logout` | Déconnexion, supprime le cookie | Non |
+| `GET` | `/api/auth/me` | Retourne pseudo + color si connecté | Cookie |
+| `GET` | `/api/auth/check-pseudo` | Vérifie la disponibilité d'un pseudo | Non |
+| `PUT` | `/api/auth/update` | Modifie la couleur ou le mot de passe | Cookie |
+| `GET` | `/api/users` | Liste des users avec `messageCount` | Non |
+
+### WebSocket Socket.IO
+
+| Événement | Direction | Description |
+|---|---|---|
+| `rejoindre` | client → serveur | Annonce pseudo + ville (géoloc IP) |
+| `historique` | serveur → client | 50 derniers messages depuis MongoDB |
+| `nouveauMessage` | client → serveur | Envoi d'un message |
+| `message` | serveur → tous | Broadcast du message |
+| `usersOnline` | serveur → tous | Liste `[{ pseudo, city }]` des connectés |
+| `disconnect` | auto | Mise à jour de la liste en ligne |
+
+Les messages sont **sanitisés** côté serveur (`<` → `&lt;`) avant stockage.
 
 ### Modèles MongoDB
 
-`User`
-- pseudo
-- createdAt
-- lastMessageAt
-
-`Message`
-- pseudo
-- message
-- createdAt
-
-## Configuration
-
-`.env` :
+**User**
+```js
+{
+  pseudo:        String  // requis, unique
+  password:      String  // hash bcrypt, requis
+  color:         String  // classe Tailwind, défaut: 'bg-gray-500'
+  createdAt:     Date    // auto
+  lastMessageAt: Date    // mis à jour à chaque message
+}
 ```
-# Port interne du container
+
+**Message**
+```js
+{
+  pseudo:    String  // requis
+  message:   String  // requis, sanitisé
+  createdAt: Date    // auto
+}
+```
+
+### Configuration backend
+
+`.env` (ne pas committer) :
+```env
 PORT=3000
-
-VITE_FRONTEND_ORIGIN=http://ip
-
-VITE_FRONTEND_URL=http://ip/B3dev-TP_VUE/
-
-VITE_BACKEND_URL=http://ip/B3dev-TP_VUE/api
+NODE_ENV=production
 
 JWT_SECRET=ton_secret_jwt_ici
-MONGO_URI=mongodb://mongo:27017/mydb
-```
-# Création du projet Vue
+MONGO_URI=mongodb://mongo:27017/B3devTPVue
 
-## Initialisation
+VITE_FRONTEND_ORIGIN=http://IP_VPS
+VITE_FRONTEND_URL=http://IP_VPS/B3dev-TP_VUE/
+VITE_BACKEND_URL=http://IP_VPS/B3dev-TP_VUE/api
+```
+
+`.env` local :
+```env
+PORT=3000
+NODE_ENV=development
+JWT_SECRET=dev_secret_local
+MONGO_URI=mongodb://localhost:27017/B3devTPVue
+VITE_FRONTEND_ORIGIN=http://localhost:5173
+VITE_FRONTEND_URL=http://localhost:5173
+VITE_BACKEND_URL=http://localhost:3000
+```
+
+---
+
+## 4. Projet Vue (Frontend)
+
+### Initialisation
 
 ```bash
 npm create vue@latest
 cd my-project
 npm install
-npm install socket.io-client
+npm install socket.io-client vue-cookies
 ```
-## Structure
+
+### Structure
+
 ```
 my-project/
 │
 ├── src/
 │   ├── views/
-│   │   ├── HomeView.vue
-│   │   ├── TchatView.vue
-│   │   └── DataTableView.vue
+│   │   ├── HomeView.vue       — accueil : hero + 3 features + CTA
+│   │   ├── AboutView.vue      — objectifs, fonctionnalités, GitHub
+│   │   ├── TchatView.vue      — page protégée : onglets Tchat / DataTable
+│   │   ├── RegisterView.vue   — inscription multi-étapes (3 steps)
+│   │   └── SettingsView.vue   — paramètres compte (couleur, mot de passe)
 │   │
 │   ├── components/
-│   │   ├── Navbar.vue
-│   │   ├── ConnexionBox.vue
-│   │   ├── ChatBox.vue
-│   │   └── UserList.vue
+│   │   ├── NavBar.vue         — navigation responsive + hamburger mobile
+│   │   ├── ConnexionBox.vue   — login/logout, layouts desktop et mobile
+│   │   ├── ChatBox.vue        — interface chat (Socket.IO)
+│   │   ├── UserList.vue       — liste des users, statut en ligne, tooltip ville
+│   │   ├── DataTable.vue      — tableau users, messageCount, statut, tooltip ville
+│   │   └── ui/
+│   │       ├── Button.vue     — variants: default, outline, ghost, destructive
+│   │       ├── Input.vue      — v-model, prop error (bordure rouge)
+│   │       └── Card.vue       — conteneur carte
 │   │
 │   ├── router/
+│   │   └── index.js           — routes + guards (tchat, settings protégés)
+│   │
 │   ├── config/
+│   │   ├── authVariables.js   — isLogged, pseudo, color, isLoading (refs globales)
+│   │   └── config.js          — URLs backend/frontend depuis .env
+│   │
+│   ├── service/
+│   │   └── authService.js     — awaitAuth() : attend la fin du chargement auth
+│   │
 │   └── assets/
-```
-
-## Fonctionnalités frontend
-
-- Navigation avec Vue Router
-- Gestion d’état (authVariables.js)
-- Authentification via cookies
-- Chat temps réel avec Socket.io
-- Appels API REST (fetch)
-- Layout dynamique (chat + users)
-
-## Configuration
-
-`.env` :
-
-VITE_BACKEND_URL=http://IP/B3dev-TP_VUE/api
-VITE_FRONTEND_URL=http://IP/B3dev-TP_VUE/
-
-# VPS multi-app (Next.js + Express + Vue + Express), avec Docker et Nginx
-
-J'utilise le VPS fourni par la formation. Je travaille sur plusieurs sites web ou service web.
-
-Il me faut donc configurer le VPS en multi-app
-
-Voici la procédure : 
-
-## VPS
-
-### Création d’un utilisateur avec droits sudo
-```bash
-# Se connecter en root
-ssh root@IP_VPS
-
-# Créer un utilisateur
-adduser newuser
-
-# Ajouter l’utilisateur aux sudoers
-usermod -aG sudo newuser
-```
-
-### Gestion des clés SSH
-
-Sur PC local :
-```bash
-ssh-keygen -t ed25519 -C "newuser-vps"
-```
-Copier la clé publique sur le VPS :
-```bash
-ssh-copy-id newuser@IP_VPS
-```
-Tester la connexion sans mot de passe :
-```bash
-ssh newuser@IP_VPS
-```
-
-### Installer Nginx
-```bash
-sudo apt update
-sudo apt install nginx -y
-sudo systemctl enable nginx
-sudo systemctl start nginx
-sudo systemctl status nginx
-```
-
-Test rapide : curl [ip]
-
-### Installer Docker
-```bash
-sudo apt install -y docker.io docker-compose
-sudo systemctl enable docker
-sudo systemctl start docker
-docker --version
-docker-compose --version
-```
-
-### MongoDB
-MongoDB dans un conteneur Docker. Pas besoin d’installer MongoDB directement sur le VPS. 
-
-Le conteneur gère tout :
-- Le service MongoDB tourne isolé dans Docker.
-- Le backend Express peut se connecter au conteneur via le nom du service (mongo) défini dans  `docker-compose.yml`.
-- Les ports sont exposés uniquement si tu veux accéder à MongoDB depuis l’extérieur.
-- La persistance se fait via un volume Docker (`./data/mongo:/data/db`), donc même si on recrée le conteneur, les données restent.
-
-Si l'on ne veut pas conteneuriser, il faut installer le service de base de données (noSQL/SQL)
-```bash
-# Installer MongoDB
-sudo apt install -y mongodb
-
-# Activer et démarrer le service
-sudo systemctl enable mongodb
-sudo systemctl start mongodb
-
-# Vérifier le statut
-sudo systemctl status mongodb
-
-# Mongo Shell
-mongosh
-```
-
-## Préparer l’espace des applications
-
-### dossier www
-```bash
-sudo mkdir -p /var/www
-sudo chown -R newuser:newuser /var/www
-cd /var/www
-```
-### Cloner les projets
-```bash
-git clone git@github.com:user/app1.git
-git clone git@github.com:user/app2.git
-git clone git@github.com:user/app3.git
-# etc...
-mkdir home
-```
-home/ → page HTML statique d’accueil avec liens vers les apps.
-
-### Structure 
-
-```
-/var/www/ :
-
-/var/www/
+│       └── main.css           — @import "tailwindcss" + base styles
 │
-├─ app1/
-│   ├─ backend/
-│   └─ frontend/
+├── public/
+│   ├── manifest.json          — PWA manifest
+│   ├── favicon.ico
+│   └── icons/icon.svg         — icône de l'app
 │
-├─ app2/
-│   ├─ backend/
-│   └─ frontend/
-│
-├─ B3dev-TP_vue/
-│   ├─ express-project/   (backend Vue)
-│   └─ my-project/        (frontend Vue)
-│
-└─ home/                  (page d’accueil HTML)
+├── src/__tests__/             — tests unitaires Vitest
+├── deployment/
+│   ├── Dockerfile
+│   └── nginx.conf
+├── vite.config.js
+├── vitest.config.js
+└── postcss.config.js
 ```
 
-Chaque app (frontend ou backend) aura son propre container.
+### Vues
 
-### home/index.html 
+| Vue | Route | Protégée | Description |
+|---|---|---|---|
+| `HomeView` | `/` | Non | Hero, 3 features, CTA contextuel |
+| `AboutView` | `/about` | Non | Objectifs, fonctionnalités, GitHub |
+| `RegisterView` | `/register` | Non | Formulaire 3 étapes |
+| `TchatView` | `/tchat` | ✅ | Tchat + DataTable (onglets) |
+| `SettingsView` | `/settings` | ✅ | Paramètres du compte |
 
-```html
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Mon VPS</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      text-align: center;
-      padding: 50px;
-    }
-    a {
-      display: block;
-      margin: 15px;
-      padding: 15px;
-      background: #1e293b;
-      color: white;
-      text-decoration: none;
-      border-radius: 10px;
-      transition: 0.2s;
-    }
-    a:hover {
-      background: #334155;
-    }
-  </style>
-</head>
-<body>
+### Composants
 
-  <h1>Les Applications</h1>
+**NavBar** — sticky, `z-50`, blur backdrop. Desktop : liens + ConnexionBox. Mobile : hamburger → menu déroulant avec profil utilisateur, liens avec icônes, ConnexionBox verticale.
 
-  <a href="/app1/">APP1</a>
-  <a href="/app2/">APP2</a>
-  <a href="/app3/">APP3</a>
-  <a href="/B3dev-TP_vue/">TP VUE</a>
+**ConnexionBox** — prop `layout` (`desktop` | `mobile`). Desktop : inputs compacts, erreur en dropdown. Mobile : champs pleine largeur empilés, erreur inline. Quand connecté : avatar coloré, pseudo, ⚙ paramètres, déconnexion.
 
+**ChatBox** — messages en bulles (propres à droite, autres à gauche), auto-scroll, envoi par Entrée ou bouton.
 
-</body>
-</html>
+**UserList** — triée (connectés en premier), dot vert/gris, tooltip ville au hover sur les connectés.
 
+**DataTable** — colonnes : pseudo + dot, créé le, dernier message, nb messages, statut. Tooltip ville au hover sur "En ligne".
+
+### Composants UI
+
+**Button**
+```vue
+<UiButton variant="default|outline|ghost|destructive" size="sm|default|lg" :disabled="false">
+  Texte
+</UiButton>
 ```
 
-## Backend Express
+**Input**
+```vue
+<UiInput v-model="val" type="text|password" placeholder="..." :error="false" />
+```
+La prop `error` passe la bordure en rouge.
 
-Exemple pour `/B3dev-TP_vue/express-project`
-
-`Dockerfile` :
-
-```Dockerfile
-FROM node:20-alpine
-
-WORKDIR /usr/src/app
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-
-EXPOSE 3000 
-CMD ["node", "server.js"]
+**Card**
+```vue
+<UiCard>Contenu</UiCard>
 ```
 
-## Frontend Vue/Next
+### Router & Guards
 
-- Vue (B3dev-TP_vue/my-project)
-
-`Dockerfile` :
-
-```Dockerfile
-# Build stage
-FROM node:20-alpine AS builder
-WORKDIR /usr/src/app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-
-# Production stage
-FROM nginx:alpine
-
-# Supprime la config par défaut
-RUN rm -rf /usr/share/nginx/html/*
-
-# Copie le build
-COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
-
-# Copie config nginx custom
-COPY deployment/nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+```js
+router.beforeEach(async (to, _from, next) => {
+  if (["/tchat", "/settings"].includes(to.path)) {
+    const logged = await awaitAuth()  // attend la fin du chargement du cookie
+    if (!logged) next("/")
+    else next()
+  } else {
+    next()
+  }
+})
 ```
 
-`nginx.conf` : 
-```conf
-server {
-    listen 80;
+`awaitAuth()` retourne une Promise qui se résout quand `isLoading` passe à `false`.
 
-    server_name _;
+### État global
 
-    root /usr/share/nginx/html;
-    index index.html;
+`authVariables.js` — refs Vue partagées entre tous les composants sans Pinia :
 
-    # Frontend Vue
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+```js
+export const isLogged = ref(false)   // booléen connexion
+export const pseudo   = ref("")      // pseudo de l'utilisateur
+export const color    = ref("bg-gray-500")  // couleur avatar
+export const isLoading = ref(true)   // true pendant /api/auth/me
+```
+
+### Configuration frontend
+
+`.env` production :
+```env
+VITE_BACKEND_URL=http://IP_VPS/B3dev-TP_VUE/api
+VITE_FRONTEND_URL=http://IP_VPS/B3dev-TP_VUE/
+```
+
+`.env` local :
+```env
+VITE_BACKEND_URL=http://localhost:3000
+VITE_FRONTEND_URL=http://localhost:5173
+```
+
+---
+
+## 5. Authentification & Sécurité
+
+- **Inscription** : pseudo (2-20 car., alphanumérique), mot de passe hashé avec `bcrypt` (10 rounds), couleur avatar
+- **Connexion** : vérification `bcrypt.compare`, cookie `httpOnly` posé côté serveur (1h)
+- **Vérification** : `/api/auth/me` vérifie le cookie à chaque chargement de page
+- **Mise à jour** : `/api/auth/update` vérifie l'ancien mot de passe avant changement
+- **Sanitisation** : les messages sont nettoyés (`<` → `&lt;`) avant stockage MongoDB
+
+### Formulaire d'inscription — 3 étapes
+
+| Étape | Contenu | Validation |
+|---|---|---|
+| 1 | Pseudo + mot de passe + confirmation | Dispo vérifiée en temps réel (debounce 400ms), format regex, passwords identiques |
+| 2 | Choix couleur avatar | Palette 8 couleurs, aperçu live |
+| 3 | Récapitulatif | Relecture avant validation |
+
+Navigation : bouton "← Retour" disponible à chaque étape, "Continuer" bloqué tant que l'étape n'est pas valide.
+
+---
+
+## 6. Tchat temps réel
+
+### Connexion client
+
+```js
+const socket = io(new URL(config.backend).origin, {
+  withCredentials: true,
+  path: "/B3dev-TP_VUE/socket.io/"
+})
+```
+
+L'URL passée à `io()` doit être l'**origine** uniquement. Le chemin Socket.IO va dans l'option `path`.
+
+### Flux d'un message
+
+1. Client émet `nouveauMessage { pseudo, message }`
+2. Serveur sanitise, crée le `Message` en MongoDB
+3. Met à jour `lastMessageAt` sur le `User`
+4. Broadcast `message` à tous via `io.emit()`
+
+### Historique
+
+À chaque connexion, le serveur envoie les 50 derniers messages :
+```js
+const history = await Message.find().sort({ createdAt: 1 }).limit(50)
+socket.emit("historique", history)
+```
+
+### Présence en ligne
+
+- Serveur maintient un `Map` `pseudo → { socketId, city }`
+- À chaque connect/disconnect : broadcast `usersOnline [{ pseudo, city }]`
+- `TchatView` écoute `usersOnline` et passe la liste en prop à `UserList` et `DataTable`
+
+---
+
+## 7. Géolocalisation
+
+À la connexion sur `/tchat`, le frontend récupère la ville via l'IP (sans permission navigateur) :
+
+```js
+const res = await fetch('https://ipapi.co/json/')
+const data = await res.json()  // → data.city
+```
+
+Si HTTPS disponible, tente d'abord la géoloc précise du navigateur (`navigator.geolocation`) avec reverse geocoding via `bigdatacloud.net`.
+
+La ville est transmise au serveur avec `socket.emit("rejoindre", { pseudo, city })` et stockée en mémoire. Elle apparaît en tooltip au hover sur les utilisateurs en ligne dans `UserList` et `DataTable`.
+
+---
+
+## 8. PWA
+
+L'application est installable sur mobile et desktop via `public/manifest.json` :
+
+```json
+{
+  "name": "B3dev Chat",
+  "short_name": "B3dev",
+  "display": "standalone",
+  "start_url": "/B3dev-TP_VUE/",
+  "theme_color": "#111827"
 }
 ```
 
-## Docker Compose
-À la racine `/var/www/`, créer `docker-compose.yml` :
+Meta tags dans `index.html` : `theme-color`, `mobile-web-app-capable`, `apple-mobile-web-app-capable`, `manifest`.
+
+Sur Chrome mobile, le navigateur propose automatiquement "Ajouter à l'écran d'accueil".
+
+---
+
+## 9. Tests unitaires
+
+Environnement : **Vitest** + **Vue Test Utils** + **jsdom**
+
+```bash
+cd my-project
+npm run test:unit
+```
+
+| Fichier | Tests | Ce qui est vérifié |
+|---|---|---|
+| `App.spec.js` | 2 | Montage sans erreur, classe `min-h-screen` |
+| `Button.spec.js` | 9 | Variants, tailles, disabled, slot, click, type |
+| `authVariables.spec.js` | 6 | Valeurs par défaut, réactivité des refs |
+| `authService.spec.js` | 3 | `awaitAuth()` sync, non connecté, async |
+
+**Total : 20 tests, 100% passants.**
+
+Configuration `vitest.config.js` :
+```js
+export default mergeConfig(viteConfig, defineConfig({
+  test: {
+    environment: 'jsdom',
+    exclude: ['**/e2e/**']
+  }
+}))
+```
+
+---
+
+## 10. VPS — Infrastructure
+
+### Création utilisateur & SSH
+
+```bash
+# Sur le VPS en root
+adduser newuser
+usermod -aG sudo newuser
+
+# Sur le PC local
+ssh-keygen -t ed25519 -C "newuser-vps"
+ssh-copy-id newuser@IP_VPS
+ssh newuser@IP_VPS  # test sans mot de passe
+```
+
+### Nginx
+
+```bash
+sudo apt update && sudo apt install nginx -y
+sudo systemctl enable nginx && sudo systemctl start nginx
+```
+
+### Docker
+
+```bash
+sudo apt install -y docker.io docker-compose
+sudo systemctl enable docker && sudo systemctl start docker
+```
+
+### MongoDB
+
+MongoDB tourne dans un conteneur Docker — pas d'installation sur le VPS.
+
+- Se connecte au backend via le nom de service `mongo` (réseau Docker interne)
+- Données persistées via volume `./data/mongo:/data/db`
+- Survit à un `docker-compose down`
+
+### Structure des dossiers VPS
+
+```
+/var/www/
+│
+├── B3dev-TP_VUE/          ← dépôt cloné
+│   ├── express-project/
+│   └── my-project/
+│
+├── data/
+│   └── mongo/             ← volume MongoDB
+│
+├── home/                  ← page d'accueil HTML statique
+└── docker-compose.yml
+```
+
+### Docker Compose
+
+`/var/www/docker-compose.yml` :
+
 ```yaml
 version: '3.8'
 
 services:
-  # App1
-  app1-back:
-    build: ./app1/backend
-    container_name: app1-back
-    ports:
-      - "3001:3000"
-
-  app1-front:
-    build: ./app1/frontend
-    container_name: app1-front
-    ports:
-      - "5001:5000"
-
-  # App2
-  app2-back:
-    build: ./app2/backend
-    container_name: app2-back
-    ports:
-      - "3002:3000"
-
-  app2-front:
-    build: ./app2/frontend
-    container_name: app2-front
-    ports:
-      - "5002:5000"
-
-  # TP Vue API
-  B3dev-TP_vue-api:
+  tp-vue-api:
     build:
-      context: ./B3dev-TP_vue/express-project
+      context: ./B3dev-TP_VUE/express-project
       dockerfile: deployment/Dockerfile
-    container_name: B3dev-TP_vue-api
+    container_name: tp-vue-api
     ports:
-    - "3003:3000"
+      - "3003:3000"
     environment:
-      - NODE_ENV=test
+      - NODE_ENV=production
+    depends_on:
+      - mongo
 
-  # TP Vue Front
-  B3dev-TP_vue:
+  tp-vue-front:
     build:
-      context: ./B3dev-TP_vue/my-project
+      context: ./B3dev-TP_VUE/my-project
       dockerfile: deployment/Dockerfile
-    container_name: B3dev-TP_vue-front
+    container_name: tp-vue-front
     ports:
       - "8080:80"
 
-  # Mongo
   mongo:
     image: mongo
     container_name: mongo
@@ -481,71 +555,91 @@ services:
       - "27017"
 ```
 
-Les ports à gauche sont exposés pour Nginx.
-Les ports à droite sont les ports internes des containers.
+Ports gauche = exposés à Nginx. Ports droite = internes aux containers.
 
-## Nginx (reverse proxy)
-
-Fichier `/etc/nginx/sites-available/vps` (et `/etc/nginx/sites-enable/vps`):
-
+**Rebuild manuel :**
+```bash
+cd /var/www
+sudo docker-compose down
+sudo docker-compose build --no-cache tp-vue-api tp-vue-front
+sudo docker-compose up -d
 ```
+
+### Nginx reverse proxy
+
+Fichier `/etc/nginx/sites-available/vps` :
+
+```nginx
 server {
     listen 80;
     server_name _;
-
     root /var/www/home;
     index index.html;
 
-    # ===== TPVUE =====
-    location /B3dev-TP_vue/ {
+    # API
+    location /B3dev-TP_VUE/api/ {
+        rewrite ^/B3dev-TP_VUE/api/(.*)$ /api/$1 break;
+        proxy_pass http://127.0.0.1:3003/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Socket.IO — pas de trailing slash → chemin complet préservé
+    location /B3dev-TP_VUE/socket.io/ {
+        proxy_pass http://127.0.0.1:3003;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Frontend — trailing slash → strip le préfixe
+    location /B3dev-TP_VUE/ {
         proxy_pass http://127.0.0.1:8080/;
         proxy_http_version 1.1;
-
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
     }
 
-    location /B3dev-TP_vue/api/ {
-        proxy_pass http://127.0.0.1:3003/;
-    }
-
-    # ===== PAGE D'ACCUEIL (EN DERNIER) =====
     location / {
         try_files $uri $uri/ /index.html;
     }
 }
-
 ```
 
-## Déploiement automatisé GitHub Actions
+> **Règle Nginx** : `proxy_pass http://host/` (trailing slash) supprime le préfixe. `proxy_pass http://host` (sans) le conserve. Socket.IO nécessite que `/B3dev-TP_VUE/socket.io/` soit préservé → pas de trailing slash.
 
-### Gestion users pour VPS
+Recharger après modification :
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
 
-Ajouter ton utilisateur (ici github) au groupe docker et Recharger la session pour prendre en compte le groupe :
+---
+
+## 11. CI/CD GitHub Actions
+
+### Secrets à configurer sur GitHub
+
+`Settings > Secrets and variables > Actions` :
+
+| Secret | Valeur |
+|---|---|
+| `VPS_HOST` | IP du VPS |
+| `VPS_USER` | Utilisateur SSH |
+| `VPS_SSH_KEY` | Clé privée SSH |
+
+### Préparation VPS
+
 ```bash
 sudo usermod -aG docker github
 newgrp docker
 ```
 
-Vérifier :
-```bash
-docker ps
-docker-compose ps
-```
-
-GitHub Actions pourra exécuter docker et docker-compose sans demander de mot de passe.
-
-
-### Fichier de déploiement
-
-`.github/workflows/deploy.yml`: 
-
-Il faut ajouter des secrets sur Github pour que le déploiement fonctionne : 
-- `VPS_HOST` : ip du VPS
-- `VPS_USER` : User du VPS (`newuser` dans l'exemple)
-- `SSH_KEY` : Clé ssh du VPS
+### `.github/workflows/deploy.yml`
 
 ```yaml
 name: Deploy to VPS
@@ -558,12 +652,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      # Récupérer le code depuis le repo
       - uses: actions/checkout@v3
 
-      # Se connecter au VPS et déployer
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.9
         with:
@@ -572,175 +663,19 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
-            # Aller dans le dossier du projet
-            cd /var/www/B3dev-TP_vue || exit 1
-
-            # Mettre à jour le code
+            cd /var/www/B3dev-TP_VUE
             git fetch origin main
             git reset --hard origin/main
-
-            # Stopper les containers existants
-            cd .. && docker-compose down
-
-            # Rebuild uniquement les services qui ont changé
-            docker-compose build --no-cache B3dev-TP_vue-api B3dev-TP_vue-front
-
-            # Relancer les containers en arrière-plan
+            cd /var/www
+            docker-compose down --remove-orphans
+            docker-compose build --no-cache tp-vue-api tp-vue-front
             docker-compose up -d
-
-            echo "Déploiement terminé"
-```
-## Update config / Web app
-
-Taper les instructions : 
-```bash
-sudo nginx -t
-sudo systemctl reload nginx
+            docker ps
 ```
 
-À chaque push sur la branche `main` :
-```bash
-git add .
-git commit -m "-message"
-git push origin main
-```
-
+À chaque `git push origin main` :
 1. Connexion SSH au VPS
-2. Mise à jour du code (git pull)
-3. Arrêt des containers Docker
-4. Rebuild des images
-5. Redémarrage des services
-
-Avantages
-- Déploiement rapide
-- Réduction des erreurs humaines
-- Synchronisation automatique avec GitHub
-
-Pour rebuild les conteneurs manuellement (`/var/www/`):
-```bash
-# Stopper les containers existants
-sudo docker-compose down
-# Rebuild uniquement les services qui ont changé
-sudo docker-compose build --no-cache tp-vue-api tp-vue-front
-# Relancer les containers en arrière-plan
-sudo docker-compose up -d
-```
-
-## Screens
-
-### http://ip/
-<img src="./imgs/multiapp.png" />
-
-### http://ip:8080/ ou http://ip/B3dev-TP_VUE/
-<img src="./imgs/tpvue.png" />
-
-# Tchat
-
-## Fonctionnement
-
-Le chat utilise Socket.io pour permettre une communication en temps réel entre les utilisateurs.
-
-### Connexion
-
-Le frontend se connecte au backend via :
-
-```js
-io(config.backend, {
-  withCredentials: true,
-  path: "/B3dev-TP_VUE/socket.io/"
-})
-```
-### Événements
-- connection → utilisateur connecté
-- historique → récupération des anciens messages
-- message → réception d’un message
-- nouveauMessage → envoi d’un message
-
-### Stockage
-
-Les messages sont :
-- stockés en mémoire (temporaire)
-- sauvegardés en base MongoDB (persistant)
-
-### Interface
-
-Le chat est composé de :
-- une liste des utilisateurs
-- une zone de messages
-- un champ de saisie
-
-<img src="./imgs/tchat.png" />
-
-# Database
-
-## Connexion
-
-Via Mongoose :
-
-```js
-mongoose.connect(process.env.MONGO_URI)
-```
-
-## Users
-
-```json
-{
-  pseudo: String,
-  createdAt: Date,
-  lastMessageAt: Date
-}
-```
-
-## Messages
-
-```json
-{
-  pseudo: String,
-  message: String,
-  createdAt: Date
-}
-```
-
-## Datatable
-
-Une vue permet d’afficher tous les utilisateurs sous forme de tableau.
-
-Fonctionnalités :
-- affichage des pseudos
-- tri par date
-- date du dernier message
-
-# NavBar
-
-La navigation est gérée via Vue Router.
-
-## Liens
-
-- Home
-- About
-- DataTable (auth requis)
-- Tchat (auth requis)
-
-## ConnexionBox
-
-Composant gérant l’authentification :
-
-Fonctionnalités :
-- login via pseudo
-- logout
-- affichage dynamique :
-  - "Connexion"
-  - ou "Bienvenue + pseudo"
-
-Utilise :
-- `/api/auth/login`
-- `/api/auth/logout`
-- `/api/auth/me`
-
-# Shadcn
-
-# Test
-## Test Unitaire
-## Test Mock
-## Test e2e
-
+2. Mise à jour du code (`git reset --hard`)
+3. Arrêt des containers
+4. Rebuild sans cache
+5. Redémarrage

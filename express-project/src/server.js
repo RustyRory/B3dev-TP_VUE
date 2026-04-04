@@ -40,11 +40,26 @@ const io = new Server(server, {
   path: "/B3dev-TP_VUE/socket.io" // IMPORTANT : correspond à Nginx
 });
 
+// pseudo → socketId pour les utilisateurs connectés
+const connectedUsers = new Map();
+
+const broadcastOnlineUsers = () => {
+  const list = Array.from(connectedUsers.entries()).map(([pseudo, { city }]) => ({ pseudo, city }));
+  io.emit("usersOnline", list);
+};
+
 io.on("connection", async (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("Socket connecté:", socket.id);
 
   const history = await Message.find().sort({ createdAt: 1 }).limit(50);
   socket.emit("historique", history);
+
+  socket.on("rejoindre", ({ pseudo, city } = {}) => {
+    if (!pseudo) return;
+    socket.data.pseudo = pseudo;
+    connectedUsers.set(pseudo, { socketId: socket.id, city: city || null });
+    broadcastOnlineUsers();
+  });
 
   socket.on("nouveauMessage", async ({ pseudo, message }) => {
     if (!pseudo || !message) return;
@@ -62,7 +77,12 @@ io.on("connection", async (socket) => {
     io.emit("message", msg);
   });
 
-  socket.on("disconnect", () => console.log("User disconnected:", socket.id));
+  socket.on("disconnect", () => {
+    const pseudo = socket.data.pseudo;
+    if (pseudo) connectedUsers.delete(pseudo);
+    broadcastOnlineUsers();
+    console.log("Socket déconnecté:", socket.id);
+  });
 });
 
 // ===== MONGODB =====
