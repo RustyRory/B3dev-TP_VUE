@@ -1,7 +1,9 @@
 <script setup>
-import { ref, watch } from "vue"
-import { isLogged, isLoading } from "../config/authVariables.js"
+import { ref, watch, onMounted, onUnmounted } from "vue"
+import { isLogged, isLoading, pseudo } from "../config/authVariables.js"
 import { useRouter } from "vue-router"
+import { io } from "socket.io-client"
+import { config } from "../config/config.js"
 
 import UserList from "../components/UserList.vue"
 import ChatBox from "../components/ChatBox.vue"
@@ -10,6 +12,59 @@ import DataTable from "../components/DataTable.vue"
 const router = useRouter()
 const activeTab = ref("tchat")
 const showUserList = ref(false)
+const onlineUsers = ref([])
+
+// Socket dédié au suivi des utilisateurs en ligne
+const socket = io(new URL(config.backend).origin, {
+  withCredentials: true,
+  path: "/B3dev-TP_VUE/socket.io/"
+})
+
+const getCity = async () => {
+  // Géolocalisation par IP — fonctionne sur HTTP et HTTPS, sans permission navigateur
+  // Si HTTPS dispo, on essaie d'abord la géoloc précise du navigateur
+  if (navigator.geolocation && location.protocol === 'https:') {
+    const city = await new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        async ({ coords }) => {
+          try {
+            const res = await fetch(
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coords.latitude}&longitude=${coords.longitude}&localityLanguage=fr`
+            )
+            const data = await res.json()
+            resolve(data.city || data.locality || null)
+          } catch {
+            resolve(null)
+          }
+        },
+        () => resolve(null),
+        { timeout: 5000 }
+      )
+    })
+    if (city) return city
+  }
+
+  // Fallback : géoloc par IP (pas de permission requise)
+  try {
+    const res = await fetch('https://ipapi.co/json/')
+    const data = await res.json()
+    return data.city || null
+  } catch {
+    return null
+  }
+}
+
+onMounted(async () => {
+  const city = await getCity()
+  socket.emit("rejoindre", { pseudo: pseudo.value, city })
+  socket.on("usersOnline", (list) => {
+    onlineUsers.value = list
+  })
+})
+
+onUnmounted(() => {
+  socket.disconnect()
+})
 
 watch([isLogged, isLoading], ([logged, loading]) => {
   if (!loading && !logged) router.push("/")
@@ -55,7 +110,7 @@ watch([isLogged, isLoading], ([logged, loading]) => {
         'border-r border-gray-200 overflow-hidden flex-shrink-0 transition-all duration-200',
         showUserList ? 'w-56' : 'w-0 md:w-56'
       ]">
-        <UserList />
+        <UserList :online-users="onlineUsers" />
       </div>
 
       <!-- Zone de chat -->
@@ -80,7 +135,7 @@ watch([isLogged, isLoading], ([logged, loading]) => {
 
     <!-- Contenu DataTable -->
     <div v-else class="flex-1 overflow-auto p-4 sm:p-6">
-      <DataTable />
+      <DataTable :online-users="onlineUsers" />
     </div>
 
   </div>

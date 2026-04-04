@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import { isLogged, isLoading } from "../config/authVariables"
 import { awaitAuth } from "../service/authService"
 
 const router = createRouter({
@@ -20,12 +19,22 @@ const router = createRouter({
       path: '/tchat',
       name: 'tchat',
       component: () => import('../views/TchatView.vue')
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('../views/RegisterView.vue')
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('../views/SettingsView.vue')
     }
   ]
 })
 
-router.beforeEach(async (to, from, next) => {
-  if (to.path === "/tchat" || to.path === "/datatable") {
+router.beforeEach(async (to, _from, next) => {
+  if (to.path === "/tchat" || to.path === "/datatable" || to.path === "/settings") {
     const logged = await awaitAuth()
     if (!logged) next("/")
     else next()
