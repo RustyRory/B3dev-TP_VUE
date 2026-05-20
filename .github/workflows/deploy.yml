@@ -5,44 +5,30 @@ on:
     branches:
       - main
 
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
 jobs:
   deploy:
+    name: Déploiement B3dev-TP_VUE
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Récupérer le code depuis le repo
-      - uses: actions/checkout@v3
+      - name: Trigger update via vps-monitor
+        run: |
+          # Login — récupère le cookie de session
+          curl -sf -c cookies.txt \
+            -X POST "${{ secrets.VPS_MONITOR_URL }}/auth/login" \
+            -H "Content-Type: application/json" \
+            -d '{"username":"${{ secrets.VPS_MONITOR_USER }}","password":"${{ secrets.VPS_MONITOR_PASS }}"}' \
+            | grep -q '"ok":true' || { echo "Échec login vps-monitor"; exit 1; }
 
-      # 2️⃣ Se connecter au VPS et déployer
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@v0.1.9
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: 22
-          script: |
-            echo "🔹 Début du déploiement sur le VPS"
+          # Déclenche git pull + docker compose up --build
+          curl -sf -b cookies.txt \
+            -X POST "${{ secrets.VPS_MONITOR_URL }}/api/deploy/update" \
+            -H "Content-Type: application/json" \
+            -d '{"name":"B3dev-TP_VUE"}' \
+            | grep -q '"ok":true' || { echo "Échec update vps-monitor"; exit 1; }
 
-            # Aller dans le dossier du projet
-            cd /var/www/B3dev-TP_VUE || exit 1
-
-            # Mettre à jour le code
-            git fetch origin main
-            git reset --hard origin/main
-            echo "🔹 Code mis à jour"
-
-            # Stopper et supprimer tous les containers existants (y compris les orphelins)
-            docker-compose down --remove-orphans
-            echo "🔹 Containers existants arrêtés"
-
-            # Rebuild des services sans utiliser le cache
-            docker-compose build --no-cache tp-vue-api tp-vue-front
-            echo "🔹 Services rebuildés"
-
-            # Relancer les containers en arrière-plan
-            docker-compose up -d
-            echo "✅ Déploiement terminé et containers lancés"
-
-            # Vérifier l’état des containers
-            docker ps
+          echo "Déploiement déclenché : http://78.138.58.95/B3dev-TP_VUE/"
