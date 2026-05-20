@@ -5,7 +5,7 @@
     <div class="text-center mb-8">
       <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">À propos de ce projet</h1>
       <p class="text-gray-500 max-w-xl mx-auto">
-        Ce TP a été réalisé dans le cadre de la formation CDA
+        Ce TP a été réalisé dans le cadre de la formation
         <strong class="text-gray-700">MyDigitalSchool</strong>. L'objectif est de se familiariser avec
         <strong class="text-gray-700">Vue.js</strong>, <strong class="text-gray-700">Express</strong> et
         <strong class="text-gray-700">Socket.IO</strong> pour créer des applications web dynamiques.
