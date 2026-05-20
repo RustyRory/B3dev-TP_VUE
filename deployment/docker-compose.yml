@@ -4,7 +4,7 @@ services:
       context: ../my-project
       dockerfile: deployment/Dockerfile
       args:
-        VITE_BACKEND_URL: http://78.138.58.95/B3dev-TP_VUE/api
+        VITE_BACKEND_URL: http://78.138.58.95/B3dev-TP_VUE
         VITE_FRONTEND_URL: http://78.138.58.95/B3dev-TP_VUE/
     restart: unless-stopped
     ports:
@@ -24,15 +24,4 @@ services:
       MONGO_URI: mongodb://mongo:27017/B3devTPVue
       VITE_FRONTEND_ORIGIN: http://78.138.58.95
       VITE_FRONTEND_URL: http://78.138.58.95/B3dev-TP_VUE/
-      VITE_BACKEND_URL: http://78.138.58.95/B3dev-TP_VUE/api
-    depends_on:
-      - mongo
-
-  mongo:
-    image: mongo:7
-    restart: unless-stopped
-    volumes:
-      - tp_vue_mongo:/data/db
-
-volumes:
-  tp_vue_mongo:
+      VITE_BACKEND_URL: http://78.138.58.95/B3dev-TP_VUE
