@@ -1,5 +1,6 @@
 services:
   tp-vue-front:
+    image: tp-vue-front:latest
     build:
       context: ../my-project
       dockerfile: deployment/Dockerfile
@@ -13,6 +14,7 @@ services:
       - tp-vue-api
 
   tp-vue-api:
+    image: tp-vue-api:latest
     build:
       context: ../express-project
       dockerfile: deployment/Dockerfile
